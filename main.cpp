@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
 
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
