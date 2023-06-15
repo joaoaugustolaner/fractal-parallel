@@ -151,29 +151,43 @@ int main(int argc, char* argv[])
         // Wait for a key or mouse click.
         int c = gfx_wait();
 
-        // Get the mouse coordinates on a click
-        int x_click = gfx_xpos();
-        int y_click = gfx_ypos();
-
-        // Calculate the new boundaries based on the click position
-        double x_center = xmin + x_click * (xmax - xmin) / gfx_xsize();
-        double y_center = ymin + y_click * (ymax - ymin) / gfx_ysize();
-
-        double zoom_factor = 0.5;  // Adjust the zoom factor as desired
-        double x_width = (xmax - xmin) * zoom_factor;
-        double y_height = (ymax - ymin) * zoom_factor;
-
-        xmin = x_center - x_width / 2;
-        xmax = x_center + x_width / 2;
-        ymin = y_center - y_height / 2;
-        ymax = y_center + y_height / 2;
-
-        // Clear the window and display the updated fractal
-        gfx_clear();
-        compute_image(xmin, xmax, ymin, ymax, maxiter);
-
         // Quit if q is pressed.
-        if (c == 'q') exit(0);
+        if (c == 'q') {
+            exit(0);
+        }
+        // Zoom in if left mouse button is clicked.
+        else if (c == 1) {
+            // Get the mouse coordinates on a click
+            int x_click = gfx_xpos();
+            int y_click = gfx_ypos();
+
+            // Calculate the new boundaries based on the click position
+            double x_center = xmin + x_click * (xmax - xmin) / gfx_xsize();
+            double y_center = ymin + y_click * (ymax - ymin) / gfx_ysize();
+
+            double zoom_factor = 0.5;  // Adjust the zoom factor as desired
+            double x_width = (xmax - xmin) * zoom_factor;
+            double y_height = (ymax - ymin) * zoom_factor;
+
+            xmin = x_center - x_width / 2;
+            xmax = x_center + x_width / 2;
+            ymin = y_center - y_height / 2;
+            ymax = y_center + y_height / 2;
+
+            // Clear the window and display the updated fractal
+            gfx_clear();
+            compute_image(xmin, xmax, ymin, ymax, maxiter);
+        }
+        // Zoom out if right mouse button is clicked.
+        else if (c == 3) {
+            xmin = -1.5;
+            xmax = 0.5;
+            ymin = -1.0;
+            ymax = 1.0;
+            // Clear the window and redraw the zoomed-out fractal.
+            gfx_clear();
+            compute_image(xmin, xmax, ymin, ymax, maxiter);
+        }
     }
 
     return 0;
