@@ -1,24 +1,21 @@
-# fractal-parallel
-This repository contais a parallel execution of a mandelbrot fractal using p-threads
+# Repo Information:
+This repository contais a parallel execution of a mandelbrot fractal using `pthreads`
 
 ---
 
-To run this project make sure you have the required libraries installed: 
+## Compile the code:
 
-* On [Windows](https://learnopengl.com/)
-* On [Linux](https://medium.com/geekculture/a-beginners-guide-to-setup-opengl-in-linux-debian-2bfe02ccd1e)
+To compile the code you can type `gcc fractal-parallel.c gfx.c -o mandelbrot -lX11 -lm`
 
+##### MacOS
+If you have an Mac as your pc make sure to install [**xquartz**](https://www.xquartz.org/)
 
-On OS X Apple has a deprecated version of OpenGL since they changed to [Metal API](https://developer.apple.com/metal/), but you can try running on OSX by [migrating your code](https://developer.apple.com/documentation/metal/metal_sample_code_library/migrating_opengl_code_to_metal), [mixing it](https://developer.apple.com/documentation/metal/metal_sample_code_library/mixing_metal_and_opengl_rendering_in_a_view) or following [this archived guide on Apple's Docs](https://developer.apple.com/library/archive/documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/opengl_intro/opengl_intro.html)
+##### Windows
+Follow [this documentation](https://www3.nd.edu/~dthain/courses/cse30341/spring2020/project3/gfx/)
 
 ---
 
-After succesfully installing the necessary dependencies, you can check if your code compiles with this command:
+## Run the code:
+To run the code you can just type `./mandelbrot` in your root folder, to run you executable.
 
-```bash
-gcc main.cpp -lglut -lGLU -lGL -lm -std=c++1z -o out
-```
-
-Finally, you can run check the output file by just ```./out``` from your current directory
-
-P.S.: This orientations are to run with `bash/zsh/fish` commands.
+P.S.: According to the gfx (graphics )
