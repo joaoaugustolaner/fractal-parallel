@@ -56,7 +56,7 @@ Color colormap[] = {
 
 #define NUM_COLORS sizeof(colormap) / sizeof(Color)
 
-pthread_mutex_t mutex; // Declare a pthread mutex
+pthread_mutex_t mutex;
 
 static Color get_color(int iter, int maxiter)
 {
@@ -111,13 +111,11 @@ void* compute_image_thread(void* params)
 
         Color color = get_color(iter, thread_params->maxiter);
 
-        // Acquire the lock before accessing the critical section
         pthread_mutex_lock(&mutex);
 
         gfx_color(color.red, color.green, color.blue);
         gfx_point(i, j);
 
-        // Release the lock after finishing the critical section
         pthread_mutex_unlock(&mutex);
     }
 
@@ -131,11 +129,11 @@ Scale the image to the range (xmin-xmax,ymin-ymax).
 
 void compute_image(double xmin, double xmax, double ymin, double ymax, int maxiter)
 {
-    int num_threads = 8; // Define the number of threads you want to use
+    int num_threads = 8; 
     pthread_t threads[num_threads];
     ThreadParams thread_params[num_threads];
 
-    pthread_mutex_init(&mutex, NULL); // Initialize the mutex
+    pthread_mutex_init(&mutex, NULL); 
 
     for (int i = 0; i < num_threads; i++) {
         thread_params[i].thread_id = i;
@@ -153,7 +151,7 @@ void compute_image(double xmin, double xmax, double ymin, double ymax, int maxit
         pthread_join(threads[i], NULL);
     }
 
-    pthread_mutex_destroy(&mutex); // Destroy the mutex
+    pthread_mutex_destroy(&mutex); 
 }
 
 int main(int argc, char* argv[])
