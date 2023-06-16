@@ -122,11 +122,6 @@ void* compute_image_thread(void* params)
     pthread_exit(NULL);
 }
 
-/*
-Compute an entire image, writing each point to the given bitmap.
-Scale the image to the range (xmin-xmax,ymin-ymax).
-*/
-
 void compute_image(double xmin, double xmax, double ymin, double ymax, int maxiter)
 {
     int num_threads = 12; 
