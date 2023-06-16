@@ -39,24 +39,59 @@ typedef struct {
     int maxiter;
 } ThreadParams;
 
-pthread_mutex_t mutex; // Declare a pthread mutex
+// Color map for the fractal
+typedef struct {
+    int red;
+    int green;
+    int blue;
+} Color;
 
-static int compute_point( double x, double y, int max )
+Color colormap[] = {
+    {0, 7, 100},
+    {32, 107, 203},
+    {237, 255, 255},
+    {255, 170, 0},
+    {0, 2, 0}
+};
+
+#define NUM_COLORS sizeof(colormap) / sizeof(Color)
+
+pthread_mutex_t mutex;
+
+static Color get_color(int iter, int maxiter)
 {
-	double complex z = 0;
-	double complex alpha = x + I*y;
+    if (iter == maxiter)
+        return colormap[NUM_COLORS - 1]; // Set the last color for points inside the set
 
-	int iter = 0;
+    double t = (double)iter / maxiter;
+    int index = t * (NUM_COLORS - 1);
 
-	while( cabs(z)<4 && iter < max ) {
-		z = cpow(z,2) + alpha;
-		iter++;
-	}
+    double fractal = t * (NUM_COLORS - 1) - index;
+    int r = colormap[index].red + fractal * (colormap[index + 1].red - colormap[index].red);
+    int g = colormap[index].green + fractal * (colormap[index + 1].green - colormap[index].green);
+    int b = colormap[index].blue + fractal * (colormap[index + 1].blue - colormap[index].blue);
 
-	return iter;
+    Color color = {r, g, b};
+    return color;
 }
 
-void* compute_image_thread(void* params) {
+static int compute_point(double x, double y, int max)
+{
+    double complex z = 0;
+    double complex alpha = x + I * y;
+
+    int iter = 0;
+
+    while (cabs(z) < 4 && iter < max) {
+        z = cpow(z, 2) + alpha;
+        iter++;
+    }
+
+    return iter;
+}
+
+void* compute_image_thread(void* params)
+{
     ThreadParams* thread_params = (ThreadParams*)params;
     int width = gfx_xsize();
     int height = gfx_ysize();
@@ -74,15 +109,13 @@ void* compute_image_thread(void* params) {
 
         int iter = compute_point(x, y, thread_params->maxiter);
 
-        int gray = 255 * iter / thread_params->maxiter;
+        Color color = get_color(iter, thread_params->maxiter);
 
-        // Acquire the lock before accessing the critical section
         pthread_mutex_lock(&mutex);
 
-        gfx_color(gray, gray, gray);
+        gfx_color(color.red, color.green, color.blue);
         gfx_point(i, j);
 
-        // Release the lock after finishing the critical section
         pthread_mutex_unlock(&mutex);
     }
 
@@ -94,13 +127,13 @@ Compute an entire image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax).
 */
 
-void compute_image( double xmin, double xmax, double ymin, double ymax, int maxiter )
+void compute_image(double xmin, double xmax, double ymin, double ymax, int maxiter)
 {
-    int num_threads = 8; // Define the number of threads you want to use
+    int num_threads = 12; 
     pthread_t threads[num_threads];
     ThreadParams thread_params[num_threads];
 
-    pthread_mutex_init(&mutex, NULL); // Initialize the mutex
+    pthread_mutex_init(&mutex, NULL); 
 
     for (int i = 0; i < num_threads; i++) {
         thread_params[i].thread_id = i;
@@ -118,42 +151,76 @@ void compute_image( double xmin, double xmax, double ymin, double ymax, int maxi
         pthread_join(threads[i], NULL);
     }
 
-    pthread_mutex_destroy(&mutex); // Destroy the mutex
+    pthread_mutex_destroy(&mutex); 
 }
 
-int main( int argc, char *argv[] )
+int main(int argc, char* argv[])
 {
-	// The initial boundaries of the fractal image in x,y space.
+    // The initial boundaries of the fractal image in x,y space.
+    double xmin = -1.5;
+    double xmax = 0.5;
+    double ymin = -1.0;
+    double ymax = 1.0;
 
-	double xmin=-1.5;
-	double xmax= 0.5;
-	double ymin=-1.0;
-	double ymax= 1.0;
+    // Maximum number of iterations to compute.
+    // Higher values take longer but have more detail.
+    int maxiter = 1000;
 
-	// Maximum number of iterations to compute.
-	// Higher values take longer but have more detail.
-	int maxiter=500;
+    // Open a new window.
+    gfx_open(1080, 720, "Mandelbrot Fractal");
 
-	// Open a new window.
-	gfx_open(640,480,"Mandelbrot Fractal");
+    // Show the configuration, just in case you want to recreate it.
+    printf("coordinates: %lf %lf %lf %lf\n", xmin, xmax, ymin, ymax);
 
-	// Show the configuration, just in case you want to recreate it.
-	printf("coordinates: %lf %lf %lf %lf\n",xmin,xmax,ymin,ymax);
+    // Fill it with a dark blue initially.
+    gfx_clear_color(255, 255, 255);
+    gfx_clear();
 
-	// Fill it with a dark blue initially.
-	gfx_clear_color(0,0,255);
-	gfx_clear();
+    // Display the fractal image
+    compute_image(xmin, xmax, ymin, ymax, maxiter);
 
-	// Display the fractal image
-	compute_image(xmin,xmax,ymin,ymax,maxiter);
+    while (1) {
+        // Wait for a key or mouse click.
+        int c = gfx_wait();
 
-	while(1) {
-		// Wait for a key or mouse click.
-		int c = gfx_wait();
+        // Quit if q is pressed.
+        if (c == 'q') {
+            exit(0);
+        }
+        // Zoom in if left mouse button is clicked.
+        else if (c == 1) {
+            // Get the mouse coordinates on a click
+            int x_click = gfx_xpos();
+            int y_click = gfx_ypos();
 
-		// Quit if q is pressed.
-		if(c=='q') exit(0);
-	}
+            // Calculate the new boundaries based on the click position
+            double x_center = xmin + x_click * (xmax - xmin) / gfx_xsize();
+            double y_center = ymin + y_click * (ymax - ymin) / gfx_ysize();
 
-	return 0;
+            double zoom_factor = 0.5;  // Adjust the zoom factor as desired
+            double x_width = (xmax - xmin) * zoom_factor;
+            double y_height = (ymax - ymin) * zoom_factor;
+
+            xmin = x_center - x_width / 2;
+            xmax = x_center + x_width / 2;
+            ymin = y_center - y_height / 2;
+            ymax = y_center + y_height / 2;
+
+            // Clear the window and display the updated fractal
+            gfx_clear();
+            compute_image(xmin, xmax, ymin, ymax, maxiter);
+        }
+        // Zoom out if right mouse button is clicked.
+        else if (c == 3) {
+            xmin = -1.5;
+            xmax = 0.5;
+            ymin = -1.0;
+            ymax = 1.0;
+            // Clear the window and redraw the zoomed-out fractal.
+            gfx_clear();
+            compute_image(xmin, xmax, ymin, ymax, maxiter);
+        }
+    }
+
+    return 0;
 }
